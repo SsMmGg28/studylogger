@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4338ca;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#grad)"/>
+  <g transform="translate(96,96)">
+    <!-- Book icon -->
+    <g transform="translate(-40,-35)" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 25C4 25 14 15 40 15C66 15 76 25 76 25V70C76 70 66 62 40 62C14 62 4 70 4 70V25Z"/>
+      <line x1="40" y1="15" x2="40" y2="62"/>
+    </g>
+  </g>
+  <text x="96" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white">SL</text>
+</svg>
