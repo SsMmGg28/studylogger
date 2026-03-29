@@ -14,14 +14,12 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { addPlanItem, getPlanItems, togglePlanItem, deletePlanItem } from '../services/plannerService'
-import { getLessonsByField, getTopics } from '../data/yksData'
+import { getLessonOptions, getTopics } from '../data/yksData'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Select from '../components/ui/Select'
 import LoadingSpinner from '../components/common/LoadingSpinner'
-import { Timestamp } from 'firebase/firestore'
-
 const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
 const SHORT_DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 
@@ -49,8 +47,8 @@ export default function PlannerPage() {
   const [saving, setSaving] = useState(false)
 
   const field = userProfile?.field || 'sayisal'
-  const lessons = useMemo(() => getLessonsByField(field, formExamType), [field, formExamType])
-  const topics = useMemo(() => formLesson ? getTopics(formExamType, formLesson) : [], [formExamType, formLesson])
+  const lessons = useMemo(() => getLessonOptions(formExamType, field), [field, formExamType])
+  const topics = useMemo(() => formLesson ? getTopics(formExamType, formLesson, field) : [], [formExamType, formLesson, field])
 
   useEffect(() => {
     if (user) loadPlan()
@@ -102,7 +100,7 @@ export default function PlannerPage() {
         lesson: formLesson,
         topic: formTopic || 'Genel',
         targetQuestions: parseInt(formTarget) || 20,
-        weekStart: Timestamp.fromDate(weekStart)
+        weekStart: weekStart.toISOString().split('T')[0]
       })
       addToast('Plan eklendi', 'success')
       setShowModal(false)

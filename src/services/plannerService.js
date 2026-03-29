@@ -7,8 +7,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  serverTimestamp,
-  Timestamp
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
@@ -18,24 +17,24 @@ function getPlanRef(userId) {
 
 export async function addPlanItem(userId, data) {
   const ref = getPlanRef(userId)
+  const { weekStart, ...rest } = data
   return addDoc(ref, {
-    ...data,
+    ...rest,
+    weekStartKey: typeof weekStart === 'string' ? weekStart : weekStart.toDate ? weekStart.toDate().toISOString().split('T')[0] : new Date(weekStart).toISOString().split('T')[0],
     completed: false,
     createdAt: serverTimestamp()
   })
 }
 
-export async function getPlanItems(userId, weekStart) {
+export async function getPlanItems(userId, weekStartISO) {
   const ref = getPlanRef(userId)
-  const start = new Date(weekStart)
+  const start = new Date(weekStartISO)
   start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 7)
+  const weekKey = start.toISOString().split('T')[0]
 
   const q = query(
     ref,
-    where('weekStart', '>=', Timestamp.fromDate(start)),
-    where('weekStart', '<', Timestamp.fromDate(end))
+    where('weekStartKey', '==', weekKey)
   )
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))

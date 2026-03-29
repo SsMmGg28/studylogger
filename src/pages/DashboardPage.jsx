@@ -382,6 +382,25 @@ export default function DashboardPage() {
         </Card>
       </motion.div>
 
+      {/* Achievement Preview */}
+      <motion.div variants={item}>
+        <Card
+          className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate('/achievements')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <h3 className="font-semibold text-gray-900 dark:text-white">Başarı Rozetleri</h3>
+            </div>
+            <span className="text-sm text-primary-600 dark:text-primary-400 hover:underline">Tümünü Gör →</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Çalışma hedeflerine ulaşarak rozetler kazan!
+          </p>
+        </Card>
+      </motion.div>
+
       {/* Today's Logs */}
       <motion.div variants={item}>
         <div className="flex items-center justify-between mb-3">

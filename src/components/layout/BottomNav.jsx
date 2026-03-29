@@ -5,15 +5,15 @@ import {
   PlusCircle,
   Clock,
   BarChart3,
-  CalendarDays
+  Trophy
 } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Ana Sayfa', icon: LayoutDashboard },
   { to: '/add', label: 'Kayıt Ekle', icon: PlusCircle },
-  { to: '/planner', label: 'Plan', icon: CalendarDays },
   { to: '/timer', label: 'Kronometre', icon: Clock },
-  { to: '/stats', label: 'İstatistik', icon: BarChart3 }
+  { to: '/stats', label: 'İstatistik', icon: BarChart3 },
+  { to: '/achievements', label: 'Başarılar', icon: Trophy }
 ]
 
 export default function BottomNav() {

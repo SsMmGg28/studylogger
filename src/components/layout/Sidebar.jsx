@@ -8,7 +8,8 @@ import {
   History,
   Settings,
   BookOpen,
-  CalendarDays
+  CalendarDays,
+  Trophy
 } from 'lucide-react'
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/timer', label: 'Kronometre', icon: Clock },
   { to: '/stats', label: 'İstatistikler', icon: BarChart3 },
   { to: '/history', label: 'Geçmiş', icon: History },
+  { to: '/achievements', label: 'Başarılar', icon: Trophy },
   { to: '/settings', label: 'Ayarlar', icon: Settings }
 ]
 

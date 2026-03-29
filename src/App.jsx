@@ -15,6 +15,7 @@ import TimerPage from './pages/TimerPage'
 import StatsPage from './pages/StatsPage'
 import SettingsPage from './pages/SettingsPage'
 import PlannerPage from './pages/PlannerPage'
+import AchievementsPage from './pages/AchievementsPage'
 
 function ThemeSync() {
   const { userProfile } = useAuth()
@@ -57,6 +58,7 @@ export default function App() {
                 <Route path="/stats" element={<StatsPage />} />
                 <Route path="/planner" element={<PlannerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/achievements" element={<AchievementsPage />} />
               </Route>
 
               {/* Catch all */}
