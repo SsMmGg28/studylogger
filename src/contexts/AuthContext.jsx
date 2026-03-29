@@ -3,7 +3,9 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  getRedirectResult,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile
 } from 'firebase/auth'
@@ -74,9 +76,7 @@ export function AuthProvider({ children }) {
     return signInWithEmailAndPassword(auth, email, password)
   }
 
-  async function loginWithGoogle() {
-    skipProfileFetch.current = true
-    const cred = await signInWithPopup(auth, googleProvider)
+  async function finalizeGoogleLogin(cred) {
     let existing
     try {
       existing = await getDoc(doc(db, 'users', cred.user.uid))
@@ -84,11 +84,32 @@ export function AuthProvider({ children }) {
       console.error('Google profil kontrol hatası:', err)
       throw err
     }
+
     if (!existing.exists()) {
       return { user: cred.user, isNew: true }
     }
+
     setUserProfile(existing.data())
     return { user: cred.user, isNew: false }
+  }
+
+  async function loginWithGoogle({ useRedirect = false } = {}) {
+    if (useRedirect) {
+      await signInWithRedirect(auth, googleProvider)
+      return null
+    }
+
+    skipProfileFetch.current = true
+    const cred = await signInWithPopup(auth, googleProvider)
+    return finalizeGoogleLogin(cred)
+  }
+
+  async function getGoogleRedirectLoginResult() {
+    const cred = await getRedirectResult(auth)
+    if (!cred) return null
+
+    skipProfileFetch.current = true
+    return finalizeGoogleLogin(cred)
   }
 
   async function completeGoogleProfile(field) {
@@ -124,6 +145,7 @@ export function AuthProvider({ children }) {
     register,
     login,
     loginWithGoogle,
+    getGoogleRedirectLoginResult,
     completeGoogleProfile,
     updateUserProfile,
     logout

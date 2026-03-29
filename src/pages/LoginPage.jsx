@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, BookOpen } from 'lucide-react'
@@ -7,13 +7,89 @@ import { useToast } from '../contexts/ToastContext'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 
+const GOOGLE_REDIRECT_PENDING_KEY = 'studylogger-google-redirect-pending'
+
+function getAuthErrorMessage(err, mode = 'login') {
+  const commonMessages = {
+    'auth/invalid-email': 'Geçersiz e-posta adresi.',
+    'auth/too-many-requests': 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.',
+    'auth/network-request-failed': 'Ağ bağlantısı kurulamadı. İnternet bağlantınızı kontrol edin.',
+    'auth/internal-error': 'Firebase tarafında beklenmeyen bir hata oluştu.'
+  }
+
+  const loginMessages = {
+    'auth/user-not-found': 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.',
+    'auth/wrong-password': 'Şifre hatalı.',
+    'auth/invalid-credential': 'E-posta veya şifre hatalı.',
+    'auth/user-disabled': 'Bu hesap devre dışı bırakılmış.',
+    'auth/operation-not-allowed': 'E-posta/şifre ile giriş Firebase Authentication içinde aktif değil.'
+  }
+
+  const googleMessages = {
+    'auth/popup-blocked': 'Tarayıcı popup penceresini engelledi. Google girişi yönlendirme ile devam edecek.',
+    'auth/popup-closed-by-user': 'Google giriş penceresi kapatıldı.',
+    'auth/cancelled-popup-request': 'Google giriş isteği iptal edildi.',
+    'auth/unauthorized-domain': 'Bu domain Firebase Authentication içinde yetkili değil.',
+    'auth/operation-not-allowed': 'Google ile giriş yöntemi Firebase Authentication içinde aktif değil.'
+  }
+
+  const scopedMessages = mode === 'google' ? googleMessages : loginMessages
+  return scopedMessages[err?.code] || commonMessages[err?.code] || `Kimlik doğrulama hatası: ${err?.code || err?.message || 'bilinmeyen-hata'}`
+}
+
+function shouldUseRedirect() {
+  if (typeof window === 'undefined') return false
+
+  const isSmallScreen = window.matchMedia('(max-width: 768px)').matches
+  const userAgent = window.navigator.userAgent.toLowerCase()
+  const isMobileBrowser = /android|iphone|ipad|ipod|mobile/.test(userAgent)
+  const isInAppBrowser = /(fbav|instagram|line|wv)/.test(userAgent)
+
+  return isSmallScreen || isMobileBrowser || isInAppBrowser
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login, loginWithGoogle } = useAuth()
+  const { login, loginWithGoogle, getGoogleRedirectLoginResult } = useAuth()
   const { addToast } = useToast()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let ignore = false
+
+    async function handleRedirectResult() {
+      if (!window.sessionStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY)) return
+
+      try {
+        const result = await getGoogleRedirectLoginResult()
+        window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY)
+        if (!result || ignore) return
+
+        if (result.isNew) {
+          addToast('Google hesabınız bağlandı. Profilinizi tamamlayın.', 'success')
+          navigate('/complete-profile', { replace: true })
+          return
+        }
+
+        addToast('Giriş başarılı!', 'success')
+        navigate('/', { replace: true })
+      } catch (err) {
+        window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY)
+        console.error('Google redirect giriş hatası:', err)
+        if (!ignore) {
+          addToast(getAuthErrorMessage(err, 'google'), 'error')
+        }
+      }
+    }
+
+    handleRedirectResult()
+
+    return () => {
+      ignore = true
+    }
+  }, [addToast, getGoogleRedirectLoginResult, navigate])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -27,13 +103,8 @@ export default function LoginPage() {
       addToast('Giriş başarılı!', 'success')
       navigate('/')
     } catch (err) {
-      const messages = {
-        'auth/user-not-found': 'Kullanıcı bulunamadı',
-        'auth/wrong-password': 'Hatalı şifre',
-        'auth/invalid-email': 'Geçersiz e-posta',
-        'auth/invalid-credential': 'Hatalı e-posta veya şifre'
-      }
-      addToast(messages[err.code] || 'Giriş başarısız', 'error')
+      console.error('E-posta/şifre giriş hatası:', err)
+      addToast(getAuthErrorMessage(err, 'login'), 'error')
     } finally {
       setLoading(false)
     }
@@ -42,7 +113,16 @@ export default function LoginPage() {
   async function handleGoogle() {
     setLoading(true)
     try {
-      const result = await loginWithGoogle()
+      const useRedirect = shouldUseRedirect()
+      if (useRedirect) {
+        window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1')
+      }
+      const result = await loginWithGoogle({ useRedirect })
+
+      if (useRedirect) {
+        return
+      }
+
       if (result.isNew) {
         navigate('/complete-profile')
       } else {
@@ -50,7 +130,21 @@ export default function LoginPage() {
         navigate('/')
       }
     } catch (err) {
-      addToast('Google ile giriş başarısız', 'error')
+      console.error('Google popup giriş hatası:', err)
+
+      if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/web-storage-unsupported') {
+        try {
+          window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1')
+          await loginWithGoogle({ useRedirect: true })
+          return
+        } catch (redirectErr) {
+          window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY)
+          console.error('Google redirect fallback hatası:', redirectErr)
+          addToast(getAuthErrorMessage(redirectErr, 'google'), 'error')
+        }
+      } else {
+        addToast(getAuthErrorMessage(err, 'google'), 'error')
+      }
     } finally {
       setLoading(false)
     }
