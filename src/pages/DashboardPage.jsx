@@ -24,6 +24,7 @@ import Button from '../components/ui/Button'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import EmptyState from '../components/common/EmptyState'
 import StudyHeatmap from '../components/common/StudyHeatmap'
+import YKSCountdown from '../components/common/YKSCountdown'
 import { getDailyQuote } from '../data/quotes'
 import { formatDateShort, formatDurationText, calculateNet } from '../utils/formatters'
 
@@ -154,6 +155,11 @@ export default function DashboardPage() {
         <p className="text-gray-500 dark:text-gray-400 mt-1">
           {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
+      </motion.div>
+
+      {/* YKS Countdown */}
+      <motion.div variants={item}>
+        <YKSCountdown />
       </motion.div>
 
       {/* Daily Motivational Quote */}
